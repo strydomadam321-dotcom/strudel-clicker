@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#163b50" />
+    <meta
+      name="description"
+      content="A delightfully flaky idle game. Click, bake, and build your strudel empire."
+    />
+    <title>Strudel Clicker</title>
+    <link rel="icon" href="assets/strudel.png" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="sitebar">
+      <span
+        >Strudel Clicker
+        <span class="muted">— a little dough goes a long way.</span></span
+      ><button id="mute" aria-label="Toggle sound">Sound: on</button>
+    </header>
+    <main class="layout">
+      <section class="bakery" aria-label="Bakery">
+        <div class="bakery-heading">
+          <button id="bakery-name" title="Rename your bakery">
+            Grandma’s little bakery
+          </button>
+          <div id="balance">0 strudels</div>
+          <div id="production">per second: 0</div>
+        </div>
+        <div class="pastry-stage">
+          <div class="rays"></div>
+          <button id="big-strudel" aria-label="Bake a strudel">
+            <img
+              src="assets/strudel.png"
+              draggable="false"
+              alt="A golden apple strudel dusted with sugar"
+            />
+          </button>
+        </div>
+        <div id="buffs"></div>
+        <div class="bakery-footer">
+          <p>Lovingly folded. Shamelessly multiplied.</p>
+          <small>v. 1.0.0 <span id="save-status">• locally baked</span></small>
+        </div>
+      </section>
+      <section class="middle" aria-label="Bakery management">
+        <header class="menu">
+          <div class="menu-buttons">
+            <button data-page="options">Options</button
+            ><button data-page="stats">Stats</button>
+          </div>
+          <div id="news" aria-live="polite">
+            You feel like making strudels. But nobody wants to eat your
+            strudels.
+          </div>
+          <div class="menu-buttons">
+            <button data-page="info">Info</button
+            ><button data-page="legacy">Legacy</button>
+          </div>
+        </header>
+        <div id="main-panel">
+          <div id="welcome">
+            <h1>The art of the fold.</h1>
+            <p>
+              A rolling pin. A few apples.<br />A wildly unreasonable ambition.
+            </p>
+            <span>Click the strudel to begin.</span>
+            <div class="flourish">❦</div>
+          </div>
+          <div id="scenes"></div>
+        </div>
+      </section>
+      <aside class="store" aria-label="Store">
+        <h1>Store</h1>
+        <div class="upgrade-title">
+          Upgrades <span id="upgrade-count">0 available</span>
+        </div>
+        <div id="upgrades"></div>
+        <div class="store-controls">
+          <div>
+            <button data-mode="buy" class="selected">Buy</button
+            ><button data-mode="sell">Sell</button>
+          </div>
+          <button data-quantity="1" class="selected">1</button
+          ><button data-quantity="10">10</button
+          ><button data-quantity="100">100</button>
+        </div>
+        <div id="buildings"></div>
+        <p class="store-footnote">Fine pastries. Questionable investments.</p>
+      </aside>
+    </main>
+    <button id="lucky" hidden aria-label="Catch the lucky strudel">
+      <img src="assets/lucky.png" alt="Golden lucky strudel" />
+    </button>
+    <div id="effects" aria-hidden="true"></div>
+    <div id="toasts" role="status" aria-live="polite"></div>
+    <div id="tooltip" role="tooltip" hidden></div>
+    <dialog id="confirm-dialog">
+      <h2>A fresh beginning</h2>
+      <p>
+        Ascend and reset your strudels, buildings and regular upgrades.
+        Achievements and Vienna Points stay with you.
+      </p>
+      <div>
+        <button id="cancel-ascend">Keep baking</button
+        ><button id="confirm-ascend">Ascend</button>
+      </div>
+    </dialog>
+    <script type="module" src="ui.js"></script>
+  </body>
+</html>
