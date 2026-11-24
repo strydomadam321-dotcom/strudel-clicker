@@ -3,6 +3,7 @@ export function initial() {
   return {
     version: 1,
     balance: 0,
+    fraction: 0,
     total: 0,
     runTotal: 0,
     clicks: 0,
@@ -18,7 +19,14 @@ export function initial() {
     started: Date.now(),
     savedAt: Date.now(),
     bakery: "Grandma’s little bakery",
-    settings: { volume: 0.25, particles: true, format: "short" },
+    playerName: "",
+    onboarded: false,
+    settings: {
+      volume: 0.25,
+      particles: true,
+      format: "short",
+      language: "en",
+    },
     buffs: [],
   };
 }
@@ -51,10 +59,26 @@ export function validate(raw) {
   return {
     ...d,
     ...raw,
+    balance: Math.floor(raw.balance),
+    total: Math.floor(raw.total),
+    runTotal: Math.floor(raw.runTotal),
+    fraction:
+      Number.isFinite(raw.fraction) && raw.fraction >= 0 && raw.fraction < 1
+        ? raw.fraction
+        : raw.balance % 1,
+    playerName:
+      typeof raw.playerName === "string"
+        ? raw.playerName.trim().slice(0, 40)
+        : "",
+    onboarded:
+      raw.onboarded === true &&
+      typeof raw.playerName === "string" &&
+      raw.playerName.trim().length > 0,
     bakery: String(raw.bakery || d.bakery).slice(0, 60),
     settings: {
       volume: Math.min(1, Math.max(0, Number(raw.settings?.volume) || 0)),
       particles: raw.settings?.particles !== false,
+      language: raw.settings?.language === "de" ? "de" : "en",
       format: raw.settings?.format === "scientific" ? "scientific" : "short",
     },
     buffs: Array.isArray(raw.buffs)

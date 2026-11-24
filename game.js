@@ -46,10 +46,16 @@ export class Game {
     );
   }
   earn(n) {
-    if (!Number.isFinite(n) || n < 0) return;
-    this.s.balance += n;
-    this.s.total += n;
-    this.s.runTotal += n;
+    if (!Number.isFinite(n) || n < 0) return 0;
+    const accumulated = n + (this.s.fraction || 0);
+    const whole = Math.floor(
+      accumulated + Number.EPSILON * Math.max(1, accumulated) * 4,
+    );
+    this.s.fraction = Math.max(0, accumulated - whole);
+    this.s.balance += whole;
+    this.s.total += whole;
+    this.s.runTotal += whole;
+    return whole;
   }
   click() {
     const n = this.clickPower();
@@ -68,10 +74,10 @@ export class Game {
     const seconds = Math.min(86400, Math.max(0, (now - this.s.savedAt) / 1000));
     this.s.buffs = [];
     const amount = this.cps(now, false) * seconds;
-    this.earn(amount);
+    const earned = this.earn(amount);
     this.s.savedAt = now;
     this.check();
-    return { seconds, amount };
+    return { seconds, amount: earned };
   }
   cost(id, n = 1) {
     const b = buildings[id];
@@ -134,15 +140,16 @@ export class Game {
     this.s.goldenClicks++;
     let result;
     if (random < 0.45) {
-      this.s.buffs.push({ type: "frenzy", end: Date.now() + 77000 });
-      result = "Warm ovens! Production ×7 for 77 seconds.";
+      this.s.buffs = this.s.buffs.filter((b) => b.type !== "frenzy");
+      this.s.buffs.push({ type: "frenzy", end: Date.now() + 12000 });
+      result = "Warm ovens! Production ×7 for 12 seconds.";
     } else if (random < 0.9) {
       const n = Math.max(
         13,
         Math.min(this.s.balance * 0.15 + 13, this.cps() * 900 + 13),
       );
-      this.earn(n);
-      result = `A lucky delivery: ${Math.floor(n).toLocaleString("en-US")} strudels!`;
+      const earned = this.earn(n);
+      result = `A lucky delivery: ${Math.floor(earned).toLocaleString(this.s.settings.language === "de" ? "de-DE" : "en-US")} strudels!`;
     } else {
       this.s.buffs.push({ type: "click", end: Date.now() + 13000 });
       result = "Floured frenzy! Click power ×77 for 13 seconds.";
@@ -174,6 +181,8 @@ export class Game {
       started: old.started,
       settings: old.settings,
       bakery: old.bakery,
+      playerName: old.playerName,
+      onboarded: old.onboarded,
     };
     if (this.s.legacy.includes("starter")) {
       this.s.balance = 100;
