@@ -893,3 +893,61 @@ dialog div {
     url("assets/strudel-small.png") 16 16,
     pointer;
 }
+/* Pixel sprites stay sharp; the main pastry keeps its semi-realistic rendering. */
+.building img,
+.upgrade img,
+.achievement img,
+.toast img,
+#lucky img {
+  image-rendering: pixelated;
+}
+#welcome {
+  padding: 50px 15px;
+  opacity: 0.6;
+}
+#welcome span {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+}
+.scene {
+  height: 140px;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+.scene-pending {
+  visibility: hidden;
+}
+.scene-label {
+  z-index: 2;
+  font-size: 11px;
+  padding: 2px 5px;
+}
+.scene-objects {
+  display: block;
+  padding: 0;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #826445 #29241f;
+}
+.scene-track {
+  position: relative;
+  height: 100%;
+}
+.scene-objects .scene-unit {
+  position: absolute;
+  width: 54px;
+  height: 68px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: none;
+}
+.bakery,
+.middle,
+.store {
+  background-size: 512px;
+}

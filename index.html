@@ -6,17 +6,17 @@
     <meta name="theme-color" content="#163b50" />
     <meta
       name="description"
-      content="A delightfully flaky idle game. Click, bake, and build your strudel empire."
+      content="Bake strudels, buy buildings, and grow your bakery."
     />
     <title>Strudel Clicker</title>
     <link rel="icon" href="assets/strudel.png" />
+    <link rel="preload" as="image" href="assets/scene-rolling-pin.png" />
+    <link rel="preload" as="image" href="assets/scene-grandma.png" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="sitebar">
-      <span
-        >Strudel Clicker
-        <span class="muted">— a little dough goes a long way.</span></span
+      <span>Strudel Clicker</span
       ><button id="mute" aria-label="Toggle sound">Sound: on</button>
     </header>
     <main class="layout">
@@ -40,8 +40,7 @@
         </div>
         <div id="buffs"></div>
         <div class="bakery-footer">
-          <p>Lovingly folded. Shamelessly multiplied.</p>
-          <small>v. 1.0.0 <span id="save-status">• locally baked</span></small>
+          <small>v. 1.1.0 <span id="save-status">• saved locally</span></small>
         </div>
       </section>
       <section class="middle" aria-label="Bakery management">
@@ -61,12 +60,7 @@
         </header>
         <div id="main-panel">
           <div id="welcome">
-            <h1>The art of the fold.</h1>
-            <p>
-              A rolling pin. A few apples.<br />A wildly unreasonable ambition.
-            </p>
             <span>Click the strudel to begin.</span>
-            <div class="flourish">❦</div>
           </div>
           <div id="scenes"></div>
         </div>
@@ -87,7 +81,6 @@
           ><button data-quantity="100">100</button>
         </div>
         <div id="buildings"></div>
-        <p class="store-footnote">Fine pastries. Questionable investments.</p>
       </aside>
     </main>
     <button id="lucky" hidden aria-label="Catch the lucky strudel">

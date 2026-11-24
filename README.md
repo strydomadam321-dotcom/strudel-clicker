@@ -1,6 +1,6 @@
 # Strudel Clicker
 
-A playable, classic browser idle game about a thoroughly unreasonable apple-strudel business. Blue paper wallpaper, dark wooden trim, textured pastry and building sprites, and three columns inspired by the early browser-clicker era.
+A playable, classic browser idle game about a thoroughly unreasonable apple-strudel business. Blue paper wallpaper, dark wooden trim, a semi-realistic pastry and detailed pixel building sprites, and three columns inspired by the early browser-clicker era.
 
 ![Strudel Clicker desktop screenshot](docs/screenshot.png)
 
@@ -20,12 +20,12 @@ The server listens on `0.0.0.0` and uses `PORT`, defaulting to `3000`. Open your
 - Click-to-bake with pooled floating numbers, capped crumb particles, pastry press feedback, synthesized Web Audio, volume and mute controls.
 - 13 buildings, from Rolling Pin and Grandma’s Hands to Portal to Vienna, an Austrian Time Machine, and Cosmic Bakery. Geometric 15% pricing, buy/sell, 1/10/100 batches, contribution tooltips, and building scene strips.
 - 75 upgrades: 65 building milestones, six click upgrades, four global recipes.
-- 26 achievements, unlock notifications, and a Butter production bonus.
+- 26 achievements, unlock notifications, and a Butter bonus for building production. Base clicks remain exactly +1 until a click upgrade is bought.
 - Random golden strudels: instant rewards, 77-second ×7 production, or 13-second ×77 click power; visible buff timers.
 - Ascension, Vienna Points, and four permanent legacy recipes. The first point unlocks at one billion lifetime strudels; future points follow the square-root formula shown in Legacy.
 - Statistics, renameable bakery, rotating news, Options and Info pages, named/scientific numbers, autosave every 60 seconds and on page exit, save/load/export/import, and up to 24 hours of offline production.
 - Responsive stacked phone layout and reduced-motion support.
-- Original image-generated assets. The final art follows the requested revised textured, earthy finish; the initial smooth cartoon sheets are not shipped.
+- Original image-generated assets. The main strudel keeps its semi-realistic finish; store, upgrade, achievement, and scene icons use detailed pixel artwork. Scene backgrounds are distinct empty environments, with one separate sprite per owned building. Backgrounds and sprites are preloaded, and large collections scroll without the old 14-object cap.
 
 ## Deploy to the existing Render web service
 
@@ -50,7 +50,7 @@ No environment variables are required. Render injects `PORT`. A web service is r
 npm test
 ```
 
-Eight Node tests cover pricing, purchases and refunds, requirements and multipliers, offline caps, all golden rewards and expiry, prestige persistence, save validation/Unicode round-trip, and all building milestone upgrades.
+Nine Node tests cover pricing, purchases and refunds, requirements and multipliers, offline caps, all golden rewards and expiry, prestige persistence, save validation/Unicode round-trip, and all building milestone upgrades.
 
 An additional Chromium browser smoke test runs against an already-running local server. Install Playwright separately, then make it available through `PLAYWRIGHT_MODULE` (an absolute module directory) or Node's module resolution:
 
@@ -58,7 +58,7 @@ An additional Chromium browser smoke test runs against an already-running local 
 PLAYWRIGHT_MODULE=/path/to/playwright node tests/browser.cjs
 ```
 
-It exercises click/buy/sell, upgrades, save/reload, export/import, late-game ascension and permanent upgrades using a valid imported fixture, lucky spawning/catching and autosave using browser time control, image/HTTP/console checks, and phone overflow. Screenshots are written to ignored `test-results/`. Late-game browser checks use seeded saves rather than claiming a multi-day balance playthrough. Chromium was tested; Safari/Firefox and physical-device audio have not been tested.
+It exercises click/buy/sell, upgrades, save/reload, export/import, late-game ascension and permanent upgrades using a valid imported fixture, lucky spawning/catching and autosave using browser time control, image/HTTP/console checks, phone overflow, one-per-purchase scene counts beyond the former cap, and cold-load artwork/trim synchronization. Screenshots are written to ignored `test-results/`. Late-game browser checks use seeded saves rather than claiming a multi-day balance playthrough. Chromium was tested; Safari/Firefox and physical-device audio have not been tested.
 
 ## Files
 
@@ -67,6 +67,7 @@ strudel-clicker/
 ├── index.html              # three-column game shell
 ├── style.css               # classic desktop and phone presentation
 ├── game.js                 # economy, buffs, upgrades, prestige
+├── scenes.js               # preloading and one-per-purchase scene sprites
 ├── ui.js                   # rendering, input, audio, particles, screens
 ├── save.js                 # local storage, validation, import/export
 ├── server.js               # dependency-free Node HTTP server

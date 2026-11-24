@@ -1,4 +1,5 @@
 import { Game } from "./game.js";
+import { SceneRenderer } from "./scenes.js";
 import { buildings } from "./data/buildings.js";
 import { upgrades, legacyUpgrades } from "./data/upgrades.js";
 import { achievements } from "./data/achievements.js";
@@ -133,10 +134,7 @@ function persist(silent = false) {
     lastAutosave = Date.now();
     $("#save-status").textContent = "• saved";
     if (!silent)
-      notify(
-        "Freshly preserved",
-        "Your bakery has been saved in this browser.",
-      );
+      notify("Game saved", "Your bakery has been saved in this browser.");
     return true;
   } catch {
     notify(
@@ -150,7 +148,8 @@ function perform(ok) {
   if (ok) {
     sound("purchase");
     render(true);
-  } else notify("Not enough dough", "Keep baking a little longer.");
+  } else
+    notify("Not enough strudels", "You need more strudels for this purchase.");
 }
 const floatPool = Array.from({ length: 24 }, () => {
   const el = document.createElement("span");
@@ -240,8 +239,8 @@ $$("[data-building]").forEach(
           : game.sell(Number(b.dataset.building), quantity),
       )),
 );
-let lastUpgradeKey = "",
-  lastSceneKey = "";
+let lastUpgradeKey = "";
+const scenes = new SceneRenderer(fmt);
 function render(force = false) {
   const s = game.s;
   $("#balance").textContent = fmt(s.balance) + " strudels";
@@ -291,7 +290,7 @@ function render(force = false) {
               `<button class="upgrade ${s.balance < u.cost ? "unaffordable" : ""}" data-upgrade="${u.id}" data-tip="upgrade:${u.id}" aria-label="Buy ${escape(u.name)} for ${fmt(u.cost)} strudels"><img src="assets/${u.art}.png" alt=""></button>`,
           )
           .join("")
-      : '<span class="empty-upgrades">Good things take a little dough.</span>';
+      : '<span class="empty-upgrades">No upgrades available.</span>';
     $$("[data-upgrade]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -311,22 +310,8 @@ function render(force = false) {
     )
     .join("");
   if (page === "bakery") {
-    const sceneKey = s.owned.join(",");
-    if (sceneKey !== lastSceneKey || force) {
-      lastSceneKey = sceneKey;
-      $("#welcome").hidden = s.owned.some((n) => n > 0);
-      $("#scenes").innerHTML = buildings
-        .filter((b) => s.owned[b.id] > 0)
-        .map(
-          (b) =>
-            `<div class="scene" style="background-image:url('assets/scene-${b.art}.png')"><span class="scene-label">${escape(b.name)} · ${s.owned[b.id]} · ${fmt(game.buildingCps(b.id))}/s</span><div class="scene-objects">${Array.from({ length: Math.min(14, s.owned[b.id]) }, () => `<img src="assets/${b.art}.png" alt="">`).join("")}</div></div>`,
-        )
-        .join("");
-    } else
-      $$(".scene-label").forEach((el, i) => {
-        const b = buildings.filter((b) => s.owned[b.id] > 0)[i];
-        el.textContent = `${b.name} · ${s.owned[b.id]} · ${fmt(game.buildingCps(b.id))}/s`;
-      });
+    $("#welcome").hidden = s.owned.some((n) => n > 0);
+    scenes.update(game);
   } else if (page === "stats" && Date.now() % 1000 < 300) renderStats();
 }
 const pageHeader = (title) =>
@@ -336,7 +321,7 @@ function showPage(name) {
   $("#tooltip").hidden = true;
   if (name === "bakery") {
     $("#main-panel").innerHTML =
-      '<div id="welcome"><h1>The art of the fold.</h1><p>A rolling pin. A few apples.<br>A wildly unreasonable ambition.</p><span>Click the strudel to begin.</span><div class="flourish">❦</div></div><div id="scenes"></div>';
+      '<div id="welcome"><span>Click the strudel to begin.</span></div><div id="scenes"></div>';
     render(true);
     return;
   }
@@ -346,7 +331,7 @@ function showPage(name) {
   if (name === "options") {
     p.innerHTML =
       pageHeader("Options") +
-      '<h3>A well-kept recipe</h3><p>Your bakery autosaves every 60 seconds. Saves stay in this browser. Export a backup before clearing browser data.</p><button class="wood-button" id="save">Save now</button><button class="wood-button" id="load">Load last save</button><button class="wood-button" id="export">Export save</button><button class="wood-button" id="import">Import save</button><textarea id="save-code" aria-label="Save code" placeholder="Export your bakery here, or paste a save to import."></textarea><label>Sound volume <input id="volume" type="range" min="0" max="1" step=".05" value="' +
+      '<h3>Save data</h3><p>Your bakery autosaves every 60 seconds. Saves stay in this browser. Export a backup before clearing browser data.</p><button class="wood-button" id="save">Save now</button><button class="wood-button" id="load">Load last save</button><button class="wood-button" id="export">Export save</button><button class="wood-button" id="import">Import save</button><textarea id="save-code" aria-label="Save code" placeholder="Export your bakery here, or paste a save to import."></textarea><label>Sound volume <input id="volume" type="range" min="0" max="1" step=".05" value="' +
       game.s.settings.volume +
       '"></label><label><input id="particles" type="checkbox" ' +
       (game.s.settings.particles ? "checked" : "") +
@@ -357,7 +342,7 @@ function showPage(name) {
         const fresh = load();
         game.s = fresh;
         game.offline();
-        notify("Recipe restored", "Loaded your last browser save.");
+        notify("Game loaded", "Loaded your last browser save.");
         render(true);
         showPage("options");
       } catch (e) {
@@ -377,7 +362,7 @@ function showPage(name) {
         persist(true);
         render(true);
         showPage("options");
-        notify("Welcome home", "Your bakery was imported.");
+        notify("Save imported", "Your bakery was imported.");
       } catch (e) {
         notify("Import failed", e.message);
       }
@@ -401,7 +386,7 @@ function showPage(name) {
   if (name === "stats") {
     p.innerHTML =
       pageHeader("Statistics") +
-      '<div id="stats-data"></div><h3>Achievements <span id="achievement-total"></span></h3><p>Each achievement adds 1% Butter to all production and clicks.</p><div class="achievement-grid">' +
+      '<div id="stats-data"></div><h3>Achievements <span id="achievement-total"></span></h3><p>Each achievement adds 1% Butter to building production.</p><div class="achievement-grid">' +
       achievements
         .map(
           (a) =>
@@ -413,8 +398,8 @@ function showPage(name) {
   }
   if (name === "info") {
     p.innerHTML =
-      pageHeader("A note from the kitchen") +
-      "<h3>Strudel Clicker</h3><p>Begin with a single apple strudel. Click to bake, buy helpful hands, and let your ovens do the work. The store reveals each building when you have baked enough to discover it.</p><p>Buy buildings in batches of 1, 10, or 100. Each costs 15% more than the last. Selling returns 25% of the current purchase value. Recipes appear as you reach building and clicking milestones.</p><p>Catch the winged golden strudel for a lucky delivery, 77 seconds of ×7 production, or 13 seconds of ×77 clicking. Your next lucky strudel arrives in roughly 1–3 minutes.</p><p>At one billion lifetime strudels, Legacy becomes available. Ascension trades your current bakery for Vienna Points and permanent recipes. You keep achievements, settings, and all-time statistics.</p><h3>A little dough goes a long way.</h3><p>An independent browser game inspired by the classic idle genre. Original generated game art. No affiliation with Cookie Clicker or its creators.</p><p>Version 1.0.0 · Made with apples, JavaScript, and unreasonable ambition.</p>";
+      pageHeader("About") +
+      "<h3>Strudel Clicker</h3><p>Begin with a single apple strudel. Click to bake, buy helpful hands, and let your ovens do the work. The store reveals each building when you have baked enough to discover it.</p><p>Buy buildings in batches of 1, 10, or 100. Each costs 15% more than the last. Selling returns 25% of the current purchase value. Recipes appear as you reach building and clicking milestones.</p><p>Catch the winged golden strudel for a lucky delivery, 77 seconds of ×7 production, or 13 seconds of ×77 clicking. Your next lucky strudel arrives in roughly 1–3 minutes.</p><p>At one billion lifetime strudels, Legacy becomes available. Ascension trades your current bakery for Vienna Points and permanent recipes. You keep achievements, settings, and all-time statistics.</p><p>An independent browser game inspired by the classic idle genre. Original generated game art. No affiliation with Cookie Clicker or its creators.</p><p>Version 1.1.0</p>";
   }
   if (name === "legacy") renderLegacy();
   $("#close-page").onclick = () => showPage("bakery");
@@ -528,7 +513,7 @@ $("#lucky").onclick = () => {
   if (!goldenUntil) return;
   goldenUntil = 0;
   $("#lucky").hidden = true;
-  notify("A golden opportunity", game.golden());
+  notify("Golden strudel", game.golden());
   sound("golden");
   render(true);
 };
@@ -568,14 +553,13 @@ function frame(now) {
 }
 const news = [
   "You feel like making strudels. But nobody wants to eat your strudels.",
-  "Local baker insists “just one more fold” is a business strategy.",
-  "Grandma denies using magic. Refuses to explain the seventh elbow.",
-  "Scientists discover apples are just strudels with extra steps.",
-  "Vienna calls. It would like its pastry back.",
-  "Butter prices rise. Baker considers investing in cows.",
-  "Entire town smells suspiciously of cinnamon. Nobody complains.",
-  "Bank approves loan after tasting collateral.",
-  "Experts recommend a balanced diet: one strudel in each hand.",
+  "Your first batch is cooling on the windowsill.",
+  "Someone asks whether you deliver. You hadn't thought that far ahead.",
+  "The apple supplier has started calling you by name.",
+  "Grandma says the dough needs another minute.",
+  "The kitchen is running out of counter space.",
+  "A neighbour returns the plate. It is empty.",
+  "The morning batch sells out before lunch.",
 ];
 let newsIndex = 0;
 setInterval(() => {
