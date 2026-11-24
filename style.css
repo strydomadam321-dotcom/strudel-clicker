@@ -957,14 +957,7 @@ dialog div {
   height: 540px;
   max-width: none;
 }
-#pin-orbit {
-  position: absolute;
-  width: min(100%, 450px);
-  aspect-ratio: 1;
-  z-index: 2;
-  pointer-events: none;
-  animation: spin 90s linear infinite;
-}
+
 .upgrade-tier {
   position: absolute;
   bottom: 1px;
@@ -1015,5 +1008,84 @@ html[lang="de"] .menu-buttons button {
 @media (max-width: 760px) {
   html[lang="de"] .menu-buttons button {
     font-size: 12px;
+  }
+}
+/* Each store row reserves real space for its icon, name and owned count. */
+.bakery,
+.middle,
+.store {
+  min-width: 0;
+}
+.building {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr) max-content;
+  gap: 5px;
+  height: auto;
+  min-height: 76px;
+  padding: 0 8px 0 3px;
+}
+.building img {
+  width: 60px;
+  height: 60px;
+}
+.building .building-copy {
+  min-width: 0;
+  padding: 5px 0;
+  overflow-wrap: anywhere;
+}
+.building .building-name {
+  font-size: 20px;
+  line-height: 1.1;
+}
+.building .price {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.building .owned {
+  position: static;
+  min-width: 18px;
+  max-width: 72px;
+  text-align: right;
+  line-height: 1;
+}
+.scene-label {
+  max-width: calc(100% - 16px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.scene-objects {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.scene-track {
+  min-width: 0;
+}
+.scene-objects .scene-unit {
+  bottom: auto;
+}
+#lucky {
+  width: 96px;
+  animation: none;
+  touch-action: manipulation;
+}
+#lucky img {
+  pointer-events: none;
+}
+.danger-button {
+  color: #ffd6c6;
+  border-color: #9f5948 !important;
+}
+#delete-dialog {
+  width: min(430px, 90vw);
+}
+#delete-dialog div {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+@media (max-width: 760px) {
+  .building .building-name {
+    font-size: 22px;
   }
 }

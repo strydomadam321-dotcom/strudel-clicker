@@ -26,10 +26,12 @@ The server listens on `0.0.0.0` and uses `PORT`, defaulting to `3000`. Open your
 - Statistics, renameable bakery, rotating news, Options and Info pages, named/scientific numbers, autosave every 60 seconds and on page exit, save/load/export/import, and up to 24 hours of offline production.
 - First-run name and English/German language selection, localized menus and tooltips, named bakeries, and persistent language preferences.
 - Grandma sprites have stable names and ages from 81 to 120, shown on hover or keyboard focus.
-- Rolling pins orbit the main pastry instead of occupying a scene row; the light burst is larger.
+- Rolling pins appear one-per-purchase in their own scene row; the main pastry retains its larger light burst.
 - All resource displays round down to whole numbers. Fractional production accumulates separately until a whole strudel is baked. The full integer bank counter updates every animation frame; the store and other expensive UI updates remain throttled. Very high production can exceed the display refresh rate.
+- Golden strudels drift and flee nearby mouse movement while staying within the window. Keyboard users can focus and catch them; touch users can tap them.
+- Options → Delete all progress opens an irreversible-reset confirmation, then clears this origin’s local/session storage, caches, enumerable IndexedDB databases, service workers and script-accessible cookies. Autosave is stopped during deletion, and other open game tabs reset too. This does **not** erase browser browsing history, browser-saved form history or HttpOnly cookies.
 - Responsive stacked phone layout and reduced-motion support.
-- Original image-generated assets. The main strudel keeps its semi-realistic finish; store, upgrade, achievement, and scene icons use detailed pixel artwork. Scene backgrounds are distinct empty environments, with one separate sprite per owned building. Backgrounds and sprites are preloaded, and large collections scroll without the old 14-object cap.
+- Original image-generated assets. The main strudel keeps its semi-realistic finish; store, upgrade, achievement, and scene icons use detailed pixel artwork. Scene backgrounds are distinct empty environments, with one separate sprite per owned building. Backgrounds and sprites are preloaded, and large collections wrap within the panel and scroll vertically without the old 14-object cap. Store rows reserve separate space for icons, names and counts, and tooltips stay within the viewport.
 
 ## Deploy to the existing Render web service
 
@@ -54,16 +56,17 @@ No environment variables are required. Render injects `PORT`. A web service is r
 npm test
 ```
 
-Sixteen Node tests cover pricing, purchases and refunds, requirements and multipliers, offline caps, all golden rewards and expiry, prestige persistence, save validation/Unicode round-trip, and all building milestone upgrades.
+Nineteen Node tests cover pricing, purchases and refunds, requirements and multipliers, offline caps, all golden rewards and expiry, prestige persistence, save validation/Unicode round-trip, and all building milestone upgrades.
 
 An additional Chromium browser smoke test runs against an already-running local server. Install Playwright separately, then make it available through `PLAYWRIGHT_MODULE` (an absolute module directory) or Node's module resolution:
 
 ```sh
 PLAYWRIGHT_MODULE=/path/to/playwright node tests/browser.cjs
 PLAYWRIGHT_MODULE=/path/to/playwright node tests/features.browser.cjs
+PLAYWRIGHT_MODULE=/path/to/playwright node tests/reset-layout.browser.cjs
 ```
 
-It exercises click/buy/sell, upgrades, save/reload, export/import, late-game ascension and permanent upgrades using a valid imported fixture, lucky spawning/catching and autosave using browser time control, image/HTTP/console checks, phone overflow, one-per-purchase scene counts beyond the former cap, and cold-load artwork/trim synchronization. The feature suite also covers both onboarding languages, persistent profiles, grandma identity, upgrade ordering, orbit rendering, individual counter steps, integer displays, and the 12-second buff expiry. Screenshots are written to ignored `test-results/`. Late-game browser checks use seeded saves rather than claiming a multi-day balance playthrough. Chromium was tested; Safari/Firefox and physical-device audio have not been tested.
+It exercises click/buy/sell, upgrades, save/reload, export/import, late-game ascension and permanent upgrades using a valid imported fixture, lucky spawning/catching and autosave using browser time control, image/HTTP/console checks, phone overflow, one-per-purchase scene counts beyond the former cap, and cold-load artwork/trim synchronization. The feature suite also covers both onboarding languages, persistent profiles, grandma identity, upgrade ordering, rolling-pin scene rendering, individual counter steps, integer displays, and the 12-second buff expiry. The reset/layout suite checks panel boundaries at 390, 800, 1000 and 1600 pixels, mouse evasion, keyboard catching, reset cancellation, full site-storage cleanup and reset propagation to another open tab. Screenshots are written to ignored `test-results/`. Late-game browser checks use seeded saves rather than claiming a multi-day balance playthrough. Chromium was tested; Safari/Firefox and physical-device audio have not been tested.
 
 ## Files
 
@@ -73,7 +76,7 @@ strudel-clicker/
 ├── style.css               # classic desktop and phone presentation
 ├── game.js                 # economy, buffs, upgrades, prestige
 ├── scenes.js               # preloading and one-per-purchase scene sprites
-├── orbit.js                # rolling pins around the pastry
+├── lucky.js                # drifting and mouse-evasive golden strudels
 ├── grandmas.js             # stable grandma names and ages
 ├── numbers.js              # integer number formatting
 ├── i18n.js                 # English/German UI translation
@@ -94,9 +97,11 @@ strudel-clicker/
 │   └── blue.png / wood.png / button.png / parchment.png
 ├── tests/
 │   ├── game.test.js
+│   ├── lucky.test.js
 │   ├── numbers.test.js
 │   ├── browser.cjs
-│   └── features.browser.cjs
+│   ├── features.browser.cjs
+│   └── reset-layout.browser.cjs
 └── docs/
     └── screenshot.png
 ```

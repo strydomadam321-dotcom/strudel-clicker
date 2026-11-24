@@ -1,5 +1,18 @@
 let language = "en";
 const de = {
+  "Reload game": "Spiel neu laden",
+  "Delete all progress": "Gesamten Fortschritt löschen",
+  "Delete all progress?": "Gesamten Fortschritt löschen?",
+  "Delete everything": "Alles löschen",
+  Cancel: "Abbrechen",
+  "This permanently deletes your bakery, name, language, achievements, legacy and all locally stored data for this site. This cannot be undone. Export a save first if you want a backup.":
+    "Dadurch werden deine Bäckerei, dein Name, deine Sprache, Erfolge, dein Vermächtnis und alle lokal gespeicherten Daten dieser Website dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden. Exportiere vorher einen Spielstand, wenn du eine Sicherung möchtest.",
+  "Browser browsing history cannot be cleared by this game.":
+    "Den Browserverlauf kann dieses Spiel nicht löschen.",
+  "Could not clear all site data":
+    "Nicht alle Website-Daten konnten gelöscht werden",
+  "Close other tabs for this site, then try again.":
+    "Schließe andere Tabs dieser Website und versuche es erneut.",
   Options: "Optionen",
   Stats: "Statistik",
   Statistics: "Statistik",

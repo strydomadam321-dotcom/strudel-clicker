@@ -103,3 +103,68 @@ export function encode(s) {
 export function decode(text) {
   return validate(JSON.parse(decodeURIComponent(escape(atob(text.trim())))));
 }
+
+// This clears origin-local data, not the browser's private browsing-history database.
+export async function clearSiteData(scope = globalThis) {
+  scope.localStorage.clear();
+  scope.sessionStorage.clear();
+  const work = [];
+  if (scope.caches)
+    work.push(
+      scope.caches
+        .keys()
+        .then((keys) =>
+          Promise.all(keys.map((key) => scope.caches.delete(key))),
+        ),
+    );
+  if (scope.indexedDB?.databases)
+    work.push(
+      scope.indexedDB.databases().then((databases) =>
+        Promise.all(
+          databases
+            .filter((db) => db.name)
+            .map(
+              (db) =>
+                new Promise((resolve, reject) => {
+                  const request = scope.indexedDB.deleteDatabase(db.name);
+                  request.onsuccess = () => resolve();
+                  request.onerror = () => reject(request.error);
+                  request.onblocked = () =>
+                    reject(
+                      new Error(
+                        "Close other tabs for this site, then try again.",
+                      ),
+                    );
+                }),
+            ),
+        ),
+      ),
+    );
+  if (scope.navigator?.serviceWorker)
+    work.push(
+      scope.navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) =>
+          Promise.all(
+            registrations.map((registration) => registration.unregister()),
+          ),
+        ),
+    );
+  if (scope.document) {
+    const paths = new Set(["/"]);
+    const parts = scope.location.pathname.split("/");
+    while (parts.length > 1) {
+      paths.add(parts.join("/") || "/");
+      parts.pop();
+    }
+    for (const entry of scope.document.cookie.split(";")) {
+      const name = entry.split("=")[0].trim();
+      if (!name) continue;
+      for (const path of paths) {
+        scope.document.cookie = `${name}=; Max-Age=0; path=${path}`;
+        scope.document.cookie = `${name}=; Max-Age=0; path=${path}; domain=${scope.location.hostname}`;
+      }
+    }
+  }
+  await Promise.all(work);
+}

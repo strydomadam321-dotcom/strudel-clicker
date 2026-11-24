@@ -13,7 +13,6 @@ function preload(src) {
   return { image, ready };
 }
 for (const b of buildings) {
-  if (b.id === 0) continue;
   const background = preload(`assets/scene-${b.art}.png`);
   const sprite = preload(`assets/${b.art}.png`);
   const entry = { loaded: false, ready: null };
@@ -36,17 +35,35 @@ export class SceneRenderer {
   }
   drawUnits(row) {
     const { body, track, building: b, count } = row;
-    const step = 42;
-    const width = Math.max(body.clientWidth, count * step + 24);
-    track.style.width = `${width}px`;
-    // Only offscreen instances are virtualized; every purchase has its own slot.
-    // Scrolling reveals the rest, even for very large saved building counts.
-    const first = Math.max(0, Math.floor((body.scrollLeft - 24) / step) - 1);
-    const last = Math.min(
-      count,
-      Math.ceil((body.scrollLeft + body.clientWidth) / step) + 1,
+    const step = 42,
+      spriteWidth = 54,
+      spriteHeight = 68,
+      rowStep = 54;
+    const columns = Math.max(
+      1,
+      Math.floor((body.clientWidth - 24 - spriteWidth) / step) + 1,
     );
-    const signature = `${first}:${last}`;
+    const rows = Math.ceil(count / columns);
+    const baseY =
+      rows === 1 ? Math.max(28, body.clientHeight - spriteHeight - 8) : 28;
+    const height = Math.max(
+      body.clientHeight,
+      baseY + (rows - 1) * rowStep + spriteHeight + 8,
+    );
+    track.style.width = "100%";
+    track.style.height = height + "px";
+    // Wrap within the panel and virtualize only vertically offscreen rows.
+    const firstRow = Math.max(
+      0,
+      Math.floor((body.scrollTop - baseY - spriteHeight) / rowStep),
+    );
+    const lastRow = Math.min(
+      rows,
+      Math.ceil((body.scrollTop + body.clientHeight - baseY) / rowStep) + 1,
+    );
+    const first = firstRow * columns,
+      last = Math.min(count, lastRow * columns);
+    const signature = `${first}:${last}:${columns}:${baseY}:${this.seed}`;
     if (row.signature === signature) return;
     row.signature = signature;
     track.replaceChildren();
@@ -63,8 +80,8 @@ export class SceneRenderer {
         image.alt = `${profile.name}, ${profile.age}`;
       }
       image.draggable = false;
-      image.style.left = `${12 + i * step}px`;
-      image.style.bottom = `${6 + (i % 3) * 3}px`;
+      image.style.left = `${12 + (i % columns) * step}px`;
+      image.style.top = `${baseY + Math.floor(i / columns) * rowStep + (i % 3) * 2}px`;
       track.append(image);
     }
   }
@@ -80,7 +97,6 @@ export class SceneRenderer {
       }
     }
     for (const b of buildings) {
-      if (b.id === 0) continue;
       const count = game.s.owned[b.id];
       if (!count) continue;
       let row = this.rows.get(b.id);
@@ -123,8 +139,8 @@ export class SceneRenderer {
       row.el.dataset.owned = count;
       row.label.textContent = `${b.name} · ${count} · ${this.format(game.buildingCps(b.id))}/s`;
       this.drawUnits(row);
-      if (purchased && row.body.scrollWidth > row.body.clientWidth) {
-        row.body.scrollLeft = row.body.scrollWidth;
+      if (purchased && row.body.scrollHeight > row.body.clientHeight) {
+        row.body.scrollTop = row.body.scrollHeight;
         this.drawUnits(row);
       }
     }

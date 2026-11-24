@@ -37,10 +37,9 @@ fs.mkdirSync("test-results", { recursive: true });
   )
     throw Error("Old tagline remains");
   await page.locator('[data-building="0"]').click();
-  if ((await page.locator("#pin-orbit").getAttribute("data-owned")) !== "1")
-    throw Error("First rolling pin did not enter the orbit");
-  if (await page.locator('[data-scene="0"]').count())
-    throw Error("Rolling pins must not occupy a scene row");
+  await page.waitForSelector('[data-scene="0"] .scene-unit');
+  if ((await page.locator('[data-scene="0"] .scene-unit').count()) !== 1)
+    throw Error("First rolling pin must appear in its scene");
   if (!(await page.locator('[data-building="0"] .owned').textContent()))
     throw Error("Building purchase failed");
   await page.locator('[data-page="options"]').click();
@@ -91,7 +90,7 @@ fs.mkdirSync("test-results", { recursive: true });
     .evaluateAll((rows) =>
       rows.map((row) => getComputedStyle(row).backgroundImage),
     );
-  if (new Set(backgrounds).size !== 12)
+  if (new Set(backgrounds).size !== 13)
     throw Error("Building backgrounds must be distinct");
   await page.screenshot({
     path: "test-results/strudel-scenes.png",
@@ -99,8 +98,10 @@ fs.mkdirSync("test-results", { recursive: true });
   });
   await page.locator('[data-quantity="10"]').click();
   await page.locator('[data-building="0"]').click();
-  if ((await page.locator("#pin-orbit").getAttribute("data-owned")) !== "15")
-    throw Error("Bulk pin orbit count incorrect");
+  if (
+    (await page.locator('[data-scene="0"]').getAttribute("data-owned")) !== "15"
+  )
+    throw Error("Bulk rolling pin scene count incorrect");
   await page.locator('[data-mode="sell"]').click();
   await page.locator('[data-building="0"]').click();
   await page.locator('[data-mode="buy"]').click();

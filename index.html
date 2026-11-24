@@ -10,7 +10,7 @@
     />
     <title>Strudel Clicker</title>
     <link rel="icon" href="assets/strudel.png" />
-    <link rel="preload" as="image" href="assets/rolling-pin.png" />
+    <link rel="preload" as="image" href="assets/scene-rolling-pin.png" />
     <link rel="preload" as="image" href="assets/scene-grandma.png" />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -30,13 +30,6 @@
         </div>
         <div class="pastry-stage">
           <div class="rays"></div>
-          <canvas
-            id="pin-orbit"
-            width="500"
-            height="500"
-            hidden
-            aria-hidden="true"
-          ></canvas>
           <button id="big-strudel" aria-label="Bake a strudel">
             <img
               src="assets/strudel.png"
@@ -47,7 +40,7 @@
         </div>
         <div id="buffs"></div>
         <div class="bakery-footer">
-          <small>v. 1.2.0 <span id="save-status">• saved locally</span></small>
+          <small>v. 1.3.0 <span id="save-status">• saved locally</span></small>
         </div>
       </section>
       <section class="middle" aria-label="Bakery management">
@@ -119,6 +112,21 @@
           Start baking
         </button>
       </form>
+    </dialog>
+    <dialog id="delete-dialog" aria-labelledby="delete-title">
+      <h2 id="delete-title">Delete all progress?</h2>
+      <p>
+        This permanently deletes your bakery, name, language, achievements,
+        legacy and all locally stored data for this site. This cannot be undone.
+        Export a save first if you want a backup.
+      </p>
+      <p>Browser browsing history cannot be cleared by this game.</p>
+      <div>
+        <button id="cancel-delete">Cancel</button
+        ><button id="confirm-delete" class="danger-button">
+          Delete everything
+        </button>
+      </div>
     </dialog>
     <dialog id="confirm-dialog">
       <h2>A fresh beginning</h2>

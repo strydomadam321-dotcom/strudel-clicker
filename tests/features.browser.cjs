@@ -50,19 +50,8 @@ fs.mkdirSync("test-results", { recursive: true });
   await page.locator("#save-code").fill(code);
   await page.locator("#import").click();
   await page.locator("#close-page").click();
-  assert.equal(
-    await page.locator("#pin-orbit").getAttribute("data-owned"),
-    "6",
-  );
-  assert.equal(await page.locator('[data-scene="0"]').count(), 0);
-  assert.ok(
-    await page.locator("#pin-orbit").evaluate((canvas) => {
-      const c = canvas.getContext("2d");
-      return c
-        .getImageData(0, 0, 500, 500)
-        .data.some((n, i) => i % 4 === 3 && n > 0);
-    }),
-  );
+  assert.equal(await page.locator('[data-scene="0"] .scene-unit').count(), 6);
+  assert.equal(await page.locator("#pin-orbit").count(), 0);
   assert.equal(await page.locator('[data-scene="1"] .scene-unit').count(), 15);
   const costs = await page
     .locator("[data-upgrade]")
@@ -190,7 +179,7 @@ fs.mkdirSync("test-results", { recursive: true });
     )),
   );
   await page.screenshot({
-    path: "test-results/strudel-orbit-mobile.png",
+    path: "test-results/strudel-scenes-mobile.png",
     fullPage: true,
   });
   assert.deepEqual(errors, []);
