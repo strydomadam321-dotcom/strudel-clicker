@@ -888,3 +888,8 @@ dialog div {
     border-right: 0;
   }
 }
+#big-strudel {
+  cursor:
+    url("assets/strudel-small.png") 16 16,
+    pointer;
+}
