@@ -78,6 +78,38 @@ fs.mkdirSync("test-results", { recursive: true });
       }),
     );
     assert.ok(sprites.every(Boolean), `sprite outside panel at ${width}`);
+    const strips = await page.locator(".scene-objects").evaluateAll((bodies) =>
+      bodies.map((body) => {
+        const images = [...body.querySelectorAll(".scene-unit")];
+        const capacity = Math.max(
+          0,
+          Math.floor((body.clientWidth - 24 - 54) / 42) + 1,
+        );
+        const owned = Number(body.closest(".scene").dataset.owned);
+        const positions = images.map((image) => image.offsetTop);
+        return {
+          noScroll:
+            body.scrollHeight === body.clientHeight &&
+            body.scrollWidth === body.clientWidth,
+          hidden: getComputedStyle(body).overflow === "hidden",
+          visible: images.length,
+          expected: Math.min(owned, capacity),
+          singleRow:
+            positions.length < 2 ||
+            Math.max(...positions) - Math.min(...positions) <= 4,
+        };
+      }),
+    );
+    assert.ok(
+      strips.every(
+        (row) =>
+          row.noScroll &&
+          row.hidden &&
+          row.visible === row.expected &&
+          row.singleRow,
+      ),
+      JSON.stringify({ width, strips }),
+    );
     await page.locator('[data-building="9"]').hover();
     const tip = await page.locator("#tooltip").boundingBox();
     assert.ok(
@@ -88,6 +120,36 @@ fs.mkdirSync("test-results", { recursive: true });
     );
   }
   await page.setViewportSize({ width: 1600, height: 950 });
+  // Buying after a strip is full changes ownership but does not add a second row.
+  await page.waitForTimeout(100);
+  const beforeCount = await page
+    .locator('[data-scene="0"] .scene-unit')
+    .count();
+  await page.locator('[data-building="0"]').click();
+  assert.equal(
+    await page.locator('[data-scene="0"]').getAttribute("data-owned"),
+    "46",
+  );
+  assert.equal(
+    await page.locator('[data-scene="0"] .scene-unit').count(),
+    beforeCount,
+  );
+  await page.locator('[data-scene="0"]').scrollIntoViewIfNeeded();
+  const strip = await page.locator('[data-scene="0"]').boundingBox();
+  await page.mouse.move(strip.x + strip.width / 2, strip.y + 70);
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(150);
+  assert.ok(
+    await page.locator("#main-panel").evaluate((el) => el.scrollTop > 0),
+  );
+  assert.ok(
+    await page
+      .locator(".scene-objects")
+      .evaluateAll((bodies) =>
+        bodies.every((body) => body.scrollTop === 0 && body.scrollLeft === 0),
+      ),
+  );
+  await page.locator("#main-panel").evaluate((el) => (el.scrollTop = 0));
   await page.mouse.move(5, 5);
   await page.waitForTimeout(5500);
   await page.screenshot({

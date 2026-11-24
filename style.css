@@ -929,10 +929,7 @@ dialog div {
   display: block;
   padding: 0;
   height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: #826445 #29241f;
+  overflow: hidden;
 }
 .scene-track {
   position: relative;
@@ -951,7 +948,7 @@ dialog div {
 .store {
   background-size: 512px;
 }
-/* A broader, soft burst and a single composited orbit around the main pastry. */
+/* A broader, soft burst behind the main pastry. */
 .rays {
   width: 540px;
   height: 540px;
@@ -1055,12 +1052,12 @@ html[lang="de"] .menu-buttons button {
   text-overflow: ellipsis;
 }
 .scene-objects {
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
 }
 .scene-track {
   min-width: 0;
+  width: 100%;
+  height: 100%;
 }
 .scene-objects .scene-unit {
   bottom: auto;

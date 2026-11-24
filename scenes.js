@@ -37,37 +37,19 @@ export class SceneRenderer {
     const { body, track, building: b, count } = row;
     const step = 42,
       spriteWidth = 54,
-      spriteHeight = 68,
-      rowStep = 54;
-    const columns = Math.max(
-      1,
+      spriteHeight = 68;
+    const capacity = Math.max(
+      0,
       Math.floor((body.clientWidth - 24 - spriteWidth) / step) + 1,
     );
-    const rows = Math.ceil(count / columns);
-    const baseY =
-      rows === 1 ? Math.max(28, body.clientHeight - spriteHeight - 8) : 28;
-    const height = Math.max(
-      body.clientHeight,
-      baseY + (rows - 1) * rowStep + spriteHeight + 8,
-    );
-    track.style.width = "100%";
-    track.style.height = height + "px";
-    // Wrap within the panel and virtualize only vertically offscreen rows.
-    const firstRow = Math.max(
-      0,
-      Math.floor((body.scrollTop - baseY - spriteHeight) / rowStep),
-    );
-    const lastRow = Math.min(
-      rows,
-      Math.ceil((body.scrollTop + body.clientHeight - baseY) / rowStep) + 1,
-    );
-    const first = firstRow * columns,
-      last = Math.min(count, lastRow * columns);
-    const signature = `${first}:${last}:${columns}:${baseY}:${this.seed}`;
+    const visible = Math.min(count, capacity);
+    const baseY = Math.max(0, body.clientHeight - spriteHeight - 12);
+    // One decorative row only. Ownership and production are never capped.
+    const signature = `${visible}:${baseY}:${this.seed}`;
     if (row.signature === signature) return;
     row.signature = signature;
     track.replaceChildren();
-    for (let i = first; i < last; i++) {
+    for (let i = 0; i < visible; i++) {
       const image = document.createElement("img");
       image.src = `assets/${b.art}.png`;
       image.alt = `${b.name} ${i + 1}`;
@@ -80,8 +62,8 @@ export class SceneRenderer {
         image.alt = `${profile.name}, ${profile.age}`;
       }
       image.draggable = false;
-      image.style.left = `${12 + (i % columns) * step}px`;
-      image.style.top = `${baseY + Math.floor(i / columns) * rowStep + (i % 3) * 2}px`;
+      image.style.left = `${12 + i * step}px`;
+      image.style.top = `${baseY + (i % 3) * 2}px`;
       track.append(image);
     }
   }
@@ -109,20 +91,14 @@ export class SceneRenderer {
         label.className = "scene-label";
         const body = document.createElement("div");
         body.className = "scene-objects";
-        body.tabIndex = 0;
-        body.setAttribute(
-          "aria-label",
-          `${b.name} collection; scroll to see more`,
-        );
+        body.setAttribute("role", "group");
+        body.setAttribute("aria-label", `${b.name} collection`);
         const track = document.createElement("div");
         track.className = "scene-track";
         body.append(track);
         el.append(label, body);
         row = { el, label, body, track, building: b, count, signature: "" };
         this.rows.set(b.id, row);
-        body.addEventListener("scroll", () => this.drawUnits(row), {
-          passive: true,
-        });
         const art = artwork.get(b.id);
         if (!art.loaded) {
           el.classList.add("scene-pending");
@@ -134,15 +110,10 @@ export class SceneRenderer {
         container.insertBefore(el, next || null);
         this.observer.observe(body);
       }
-      const purchased = count > row.count;
       row.count = count;
       row.el.dataset.owned = count;
       row.label.textContent = `${b.name} · ${count} · ${this.format(game.buildingCps(b.id))}/s`;
       this.drawUnits(row);
-      if (purchased && row.body.scrollHeight > row.body.clientHeight) {
-        row.body.scrollTop = row.body.scrollHeight;
-        this.drawUnits(row);
-      }
     }
   }
 }
