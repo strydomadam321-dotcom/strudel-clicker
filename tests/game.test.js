@@ -12,7 +12,7 @@ test("clicking bakes and awards achievements once", () => {
   assert.equal(g.s.clicks, 1);
   g.check();
   assert.equal(messages.length, 1);
-  assert.equal(g.clickPower(), 1.01);
+  assert.equal(g.clickPower(), 1);
 });
 test("bulk purchases equal sequential geometric costs within rounding", () => {
   const g = new Game();
@@ -119,4 +119,19 @@ test("all buildings and milestone upgrades are usable", () => {
   }
   assert.equal(g.s.upgrades.length, 65);
   assert.ok(g.cps() > 1e12);
+});
+
+test("achievement Butter does not change base clicks; purchased click upgrades do", () => {
+  const g = new Game();
+  for (let i = 0; i < 100; i++) assert.equal(g.click(), 1);
+  assert.equal(g.s.balance, 100);
+  assert.ok(g.s.achievements.length > 1);
+  g.s.owned[0] = 1;
+  assert.ok(g.cps() > 0.1);
+  assert.ok(g.upgrade("click0"));
+  assert.equal(g.click(), 2);
+  g.s.upgrades.push("global0");
+  g.s.legacy.push("recipe");
+  g.s.earnedPoints = 10;
+  assert.equal(g.clickPower(), 2);
 });

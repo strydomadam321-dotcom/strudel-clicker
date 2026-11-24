@@ -49,7 +49,7 @@ export const upgrades = buildings
       at: cost / 2,
       kind: "global",
       multiplier: 1.25,
-      description: "All production and clicks gain 25%.",
+      description: "All building production gains 25%.",
       art: "medal",
     })),
   );

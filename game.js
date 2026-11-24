@@ -42,7 +42,6 @@ export class Game {
       upgrades
         .filter((u) => u.kind === "click" && this.s.upgrades.includes(u.id))
         .reduce((a, u) => a * u.multiplier, 1) *
-      this.multiplier() *
       (this.s.buffs.some((b) => b.type === "click" && b.end > now) ? 77 : 1)
     );
   }
