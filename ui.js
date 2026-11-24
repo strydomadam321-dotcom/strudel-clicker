@@ -1,4 +1,8 @@
 import { Game } from "./game.js";
+import { formatNumber } from "./numbers.js";
+import { grandmaProfile } from "./grandmas.js";
+import { PinOrbit } from "./orbit.js";
+import { t, setLanguage, applyTranslations, bakeryName } from "./i18n.js";
 import { SceneRenderer } from "./scenes.js";
 import { buildings } from "./data/buildings.js";
 import { upgrades, legacyUpgrades } from "./data/upgrades.js";
@@ -86,6 +90,9 @@ try {
   );
 }
 const game = new Game(state, notify);
+setLanguage(game.s.settings.language);
+if (game.s.playerName)
+  game.s.bakery = bakeryName(game.s.playerName, game.s.settings.language);
 const offline = game.offline();
 if (offline.amount > 1 && offline.seconds > 60)
   setTimeout(
@@ -96,31 +103,15 @@ if (offline.amount > 1 && offline.seconds > 60)
       ),
     500,
   );
-export function fmt(n, precision = 1) {
-  if (!Number.isFinite(n)) return "a rather large amount";
-  if (game?.s.settings.format === "scientific" && n >= 1e6)
-    return n.toExponential(2);
-  const units = [
-    "",
-    "million",
-    "billion",
-    "trillion",
-    "quadrillion",
-    "quintillion",
-    "sextillion",
-    "septillion",
-    "octillion",
-    "nonillion",
-    "decillion",
-  ];
-  if (n < 1e6)
-    return n.toLocaleString("en-US", {
-      maximumFractionDigits: n < 100 ? precision : 0,
-    });
-  const group = Math.floor(Math.log10(n) / 3);
-  return group - 1 < units.length
-    ? (n / 1000 ** group).toFixed(2) + " " + units[group - 1]
-    : n.toExponential(2);
+export function fmt(n) {
+  return formatNumber(n, game.s.settings);
+}
+function updateCounter() {
+  const text = t(
+    formatNumber(game.s.balance, { ...game.s.settings, format: "full" }) +
+      " strudels",
+  );
+  if ($("#balance").textContent !== text) $("#balance").textContent = text;
 }
 const duration = (s) =>
   s < 60
@@ -191,14 +182,35 @@ $("#big-strudel").addEventListener("click", (e) => {
   effects(e.clientX || r.x + r.width / 2, e.clientY || r.y + r.height / 2, n);
   render();
 });
-$("#bakery-name").onclick = () => {
-  const name = prompt("What shall we call your bakery?", game.s.bakery);
-  if (name?.trim()) {
-    game.s.bakery = name.trim().slice(0, 60);
-    persist(true);
-    render();
+function openProfile() {
+  $("#player-name").value = game.s.playerName;
+  $("#setup-language").value = game.s.settings.language;
+  $("#setup-dialog").showModal();
+  $("#player-name").focus();
+}
+$("#bakery-name").onclick = openProfile;
+$("#setup-dialog").addEventListener("cancel", (event) =>
+  event.preventDefault(),
+);
+$("#setup-language").onchange = (event) => setLanguage(event.target.value);
+$("#profile-form").onsubmit = (event) => {
+  event.preventDefault();
+  const name = $("#player-name").value.trim();
+  if (!name) {
+    $("#player-name").setCustomValidity(t("Please enter your name."));
+    $("#player-name").reportValidity();
+    return;
   }
+  game.s.playerName = name.slice(0, 40);
+  game.s.settings.language = $("#setup-language").value;
+  setLanguage(game.s.settings.language);
+  game.s.bakery = bakeryName(game.s.playerName);
+  game.s.onboarded = true;
+  $("#setup-dialog").close();
+  persist(true);
+  render(true);
 };
+$("#player-name").oninput = () => $("#player-name").setCustomValidity("");
 $("#mute").onclick = () => {
   game.s.settings.volume = game.s.settings.volume ? 0 : 0.25;
   persist(true);
@@ -241,12 +253,16 @@ $$("[data-building]").forEach(
 );
 let lastUpgradeKey = "";
 const scenes = new SceneRenderer(fmt);
+const pins = new PinOrbit($("#pin-orbit"));
 function render(force = false) {
   const s = game.s;
-  $("#balance").textContent = fmt(s.balance) + " strudels";
+  if (s.playerName) s.bakery = bakeryName(s.playerName, s.settings.language);
+  updateCounter();
+  pins.update(s.owned[0]);
   $("#production").textContent = "per second: " + fmt(game.cps());
   $("#bakery-name").textContent = s.bakery;
-  document.title = fmt(s.balance) + " strudels - Strudel Clicker";
+  $("#bakery-name").title = t("Your name");
+  document.title = t(fmt(s.balance) + " strudels") + " - Strudel Clicker";
   $("#mute").textContent = "Sound: " + (s.settings.volume ? "on" : "off");
   $$("[data-mode]").forEach((b) =>
     b.classList.toggle("selected", b.dataset.mode === mode),
@@ -278,7 +294,9 @@ function render(force = false) {
       `${mode} ${quantity} ${known ? b.name : "unknown building"} for ${fmt(price)} strudels`,
     );
   }
-  const available = upgrades.filter((u) => game.available(u)),
+  const available = upgrades
+      .filter((u) => game.available(u))
+      .sort((a, b) => a.cost - b.cost || a.id.localeCompare(b.id)),
     key = available.map((u) => u.id + ":" + (s.balance >= u.cost)).join(",");
   if (key !== lastUpgradeKey || force) {
     lastUpgradeKey = key;
@@ -287,7 +305,7 @@ function render(force = false) {
       ? available
           .map(
             (u) =>
-              `<button class="upgrade ${s.balance < u.cost ? "unaffordable" : ""}" data-upgrade="${u.id}" data-tip="upgrade:${u.id}" aria-label="Buy ${escape(u.name)} for ${fmt(u.cost)} strudels"><img src="assets/${u.art}.png" alt=""></button>`,
+              `<button class="upgrade ${s.balance < u.cost ? "unaffordable" : ""}" data-upgrade="${u.id}" data-tip="upgrade:${u.id}" aria-label="Buy ${escape(u.name)} for ${fmt(u.cost)} strudels"><img src="assets/${u.art}.png" alt="">${u.tier ? `<span class="upgrade-tier">${u.tier}</span>` : ""}</button>`,
           )
           .join("")
       : '<span class="empty-upgrades">No upgrades available.</span>';
@@ -331,16 +349,26 @@ function showPage(name) {
   if (name === "options") {
     p.innerHTML =
       pageHeader("Options") +
-      '<h3>Save data</h3><p>Your bakery autosaves every 60 seconds. Saves stay in this browser. Export a backup before clearing browser data.</p><button class="wood-button" id="save">Save now</button><button class="wood-button" id="load">Load last save</button><button class="wood-button" id="export">Export save</button><button class="wood-button" id="import">Import save</button><textarea id="save-code" aria-label="Save code" placeholder="Export your bakery here, or paste a save to import."></textarea><label>Sound volume <input id="volume" type="range" min="0" max="1" step=".05" value="' +
+      '<label>Language <select id="language"><option value="en">English</option><option value="de">German</option></select></label><button class="wood-button" id="edit-profile">Your name</button><h3>Save data</h3><p>Your bakery autosaves every 60 seconds. Saves stay in this browser. Export a backup before clearing browser data.</p><button class="wood-button" id="save">Save now</button><button class="wood-button" id="load">Load last save</button><button class="wood-button" id="export">Export save</button><button class="wood-button" id="import">Import save</button><textarea id="save-code" aria-label="Save code" placeholder="Export your bakery here, or paste a save to import."></textarea><label>Sound volume <input id="volume" type="range" min="0" max="1" step=".05" value="' +
       game.s.settings.volume +
       '"></label><label><input id="particles" type="checkbox" ' +
       (game.s.settings.particles ? "checked" : "") +
       '> Crumbs and particles</label><label>Number format <select id="number-format"><option value="short">Named (million, billion…)</option><option value="scientific">Scientific</option></select></label><p>Sound is synthesized locally. No ads, tracking, or cloud accounts. Offline production is capped at 24 hours.</p>';
+    $("#language").value = game.s.settings.language;
+    $("#language").onchange = (event) => {
+      game.s.settings.language = event.target.value;
+      setLanguage(game.s.settings.language);
+      if (game.s.playerName) game.s.bakery = bakeryName(game.s.playerName);
+      persist(true);
+      render(true);
+    };
+    $("#edit-profile").onclick = openProfile;
     $("#save").onclick = () => persist();
     $("#load").onclick = () => {
       try {
         const fresh = load();
         game.s = fresh;
+        setLanguage(game.s.settings.language);
         game.offline();
         notify("Game loaded", "Loaded your last browser save.");
         render(true);
@@ -358,6 +386,7 @@ function showPage(name) {
       try {
         const candidate = decode($("#save-code").value);
         game.s = candidate;
+        setLanguage(game.s.settings.language);
         game.offline();
         persist(true);
         render(true);
@@ -399,7 +428,7 @@ function showPage(name) {
   if (name === "info") {
     p.innerHTML =
       pageHeader("About") +
-      "<h3>Strudel Clicker</h3><p>Begin with a single apple strudel. Click to bake, buy helpful hands, and let your ovens do the work. The store reveals each building when you have baked enough to discover it.</p><p>Buy buildings in batches of 1, 10, or 100. Each costs 15% more than the last. Selling returns 25% of the current purchase value. Recipes appear as you reach building and clicking milestones.</p><p>Catch the winged golden strudel for a lucky delivery, 77 seconds of ×7 production, or 13 seconds of ×77 clicking. Your next lucky strudel arrives in roughly 1–3 minutes.</p><p>At one billion lifetime strudels, Legacy becomes available. Ascension trades your current bakery for Vienna Points and permanent recipes. You keep achievements, settings, and all-time statistics.</p><p>An independent browser game inspired by the classic idle genre. Original generated game art. No affiliation with Cookie Clicker or its creators.</p><p>Version 1.1.0</p>";
+      "<h3>Strudel Clicker</h3><p>Begin with a single apple strudel. Click to bake, buy helpful hands, and let your ovens do the work. The store reveals each building when you have baked enough to discover it.</p><p>Buy buildings in batches of 1, 10, or 100. Each costs 15% more than the last. Selling returns 25% of the current purchase value. Recipes appear as you reach building and clicking milestones.</p><p>Catch the winged golden strudel for a lucky delivery, 12 seconds of ×7 production, or 13 seconds of ×77 clicking. Your next lucky strudel arrives in roughly 1–3 minutes.</p><p>At one billion lifetime strudels, Legacy becomes available. Ascension trades your current bakery for Vienna Points and permanent recipes. You keep achievements, settings, and all-time statistics.</p><p>An independent browser game inspired by the classic idle genre. Original generated game art. No affiliation with Cookie Clicker or its creators.</p><p>Version 1.2.0</p>";
   }
   if (name === "legacy") renderLegacy();
   $("#close-page").onclick = () => showPage("bakery");
@@ -477,9 +506,20 @@ $("#confirm-ascend").onclick = () => {
 };
 function tipText(key) {
   const [type, id] = key.split(":");
+  if (type === "grandma") {
+    const profile = grandmaProfile(
+      Number(id) - 1,
+      game.s.started + game.s.ascensions,
+    );
+    return `<strong>${escape(profile.name)}</strong>${t("Age")}: ${profile.age} (${t("years old")})`;
+  }
   if (type === "building") {
     const b = buildings[Number(id)];
-    return `<strong>${escape(b.name)}</strong><b>${mode === "sell" ? "Sell value" : "Cost"}: ${fmt(mode === "sell" ? game.refund(b.id, quantity) : game.cost(b.id, quantity))} strudels</b><br>Each makes ${fmt(b.cps * upgrades.filter((u) => u.building === b.id && game.s.upgrades.includes(u.id)).reduce((a, u) => a * u.multiplier, 1) * game.multiplier())} / second<br>Owned: ${game.s.owned[b.id]}<br>Total contribution: ${fmt(game.buildingCps(b.id))} / second<em>“${b.description}”</em>`;
+    const grandma =
+      b.id === 1 && game.s.owned[1]
+        ? grandmaProfile(0, game.s.started + game.s.ascensions)
+        : null;
+    return `<strong>${escape(b.name)}</strong>${grandma ? `<p>${escape(grandma.name)} · ${t("Age")}: ${grandma.age}</p>` : ""}<b>${mode === "sell" ? "Sell value" : "Cost"}: ${fmt(mode === "sell" ? game.refund(b.id, quantity) : game.cost(b.id, quantity))} strudels</b><br>Each makes ${fmt(b.cps * upgrades.filter((u) => u.building === b.id && game.s.upgrades.includes(u.id)).reduce((a, u) => a * u.multiplier, 1) * game.multiplier())} / second<br>Owned: ${game.s.owned[b.id]}<br>Total contribution: ${fmt(game.buildingCps(b.id))} / second<em>“${b.description}”</em>`;
   }
   if (type === "upgrade") {
     const u = upgrades.find((u) => u.id === id);
@@ -493,6 +533,7 @@ function showTip(e) {
   if (!target) return;
   const t = $("#tooltip");
   t.innerHTML = tipText(target.dataset.tip);
+  applyTranslations();
   t.hidden = false;
   const r = target.getBoundingClientRect(),
     w = t.offsetWidth,
@@ -544,6 +585,7 @@ function frame(now) {
     goldenUntil = 0;
     $("#lucky").hidden = true;
   }
+  updateCounter();
   if (now - lastRender > 150) {
     render();
     lastRender = now;
@@ -575,4 +617,6 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) persist(true);
 });
 render(true);
+applyTranslations();
+if (!game.s.onboarded) openProfile();
 requestAnimationFrame(frame);

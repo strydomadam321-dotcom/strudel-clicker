@@ -10,7 +10,7 @@
     />
     <title>Strudel Clicker</title>
     <link rel="icon" href="assets/strudel.png" />
-    <link rel="preload" as="image" href="assets/scene-rolling-pin.png" />
+    <link rel="preload" as="image" href="assets/rolling-pin.png" />
     <link rel="preload" as="image" href="assets/scene-grandma.png" />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -22,7 +22,7 @@
     <main class="layout">
       <section class="bakery" aria-label="Bakery">
         <div class="bakery-heading">
-          <button id="bakery-name" title="Rename your bakery">
+          <button id="bakery-name" data-user-content title="Rename your bakery">
             Grandma’s little bakery
           </button>
           <div id="balance">0 strudels</div>
@@ -30,6 +30,13 @@
         </div>
         <div class="pastry-stage">
           <div class="rays"></div>
+          <canvas
+            id="pin-orbit"
+            width="500"
+            height="500"
+            hidden
+            aria-hidden="true"
+          ></canvas>
           <button id="big-strudel" aria-label="Bake a strudel">
             <img
               src="assets/strudel.png"
@@ -40,7 +47,7 @@
         </div>
         <div id="buffs"></div>
         <div class="bakery-footer">
-          <small>v. 1.1.0 <span id="save-status">• saved locally</span></small>
+          <small>v. 1.2.0 <span id="save-status">• saved locally</span></small>
         </div>
       </section>
       <section class="middle" aria-label="Bakery management">
@@ -89,6 +96,30 @@
     <div id="effects" aria-hidden="true"></div>
     <div id="toasts" role="status" aria-live="polite"></div>
     <div id="tooltip" role="tooltip" hidden></div>
+    <dialog id="setup-dialog" aria-labelledby="setup-title">
+      <form id="profile-form">
+        <h2 id="setup-title">Welcome to your bakery</h2>
+        <p>
+          Choose a name and language. You can change the language in Options.
+        </p>
+        <label for="player-name">Your name</label>
+        <input
+          id="player-name"
+          name="playerName"
+          required
+          maxlength="40"
+          autocomplete="given-name"
+        />
+        <label for="setup-language">Language</label>
+        <select id="setup-language" name="language">
+          <option value="en">English</option>
+          <option value="de">German</option>
+        </select>
+        <button type="submit" class="wood-button" id="start-baking">
+          Start baking
+        </button>
+      </form>
+    </dialog>
     <dialog id="confirm-dialog">
       <h2>A fresh beginning</h2>
       <p>

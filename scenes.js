@@ -1,3 +1,4 @@
+import { grandmaProfile } from "./grandmas.js";
 import { buildings } from "./data/buildings.js";
 
 // Decode before the first purchase so scenery and sprites arrive together.
@@ -12,6 +13,7 @@ function preload(src) {
   return { image, ready };
 }
 for (const b of buildings) {
+  if (b.id === 0) continue;
   const background = preload(`assets/scene-${b.art}.png`);
   const sprite = preload(`assets/${b.art}.png`);
   const entry = { loaded: false, ready: null };
@@ -54,6 +56,12 @@ export class SceneRenderer {
       image.alt = `${b.name} ${i + 1}`;
       image.className = "scene-unit";
       image.dataset.instance = i + 1;
+      if (b.id === 1) {
+        const profile = grandmaProfile(i, this.seed);
+        image.dataset.tip = `grandma:${i + 1}`;
+        image.tabIndex = 0;
+        image.alt = `${profile.name}, ${profile.age}`;
+      }
       image.draggable = false;
       image.style.left = `${12 + i * step}px`;
       image.style.bottom = `${6 + (i % 3) * 3}px`;
@@ -61,6 +69,7 @@ export class SceneRenderer {
     }
   }
   update(game) {
+    this.seed = game.s.started + game.s.ascensions;
     const container = document.querySelector("#scenes");
     if (!container) return;
     for (const [id, row] of this.rows) {
@@ -71,6 +80,7 @@ export class SceneRenderer {
       }
     }
     for (const b of buildings) {
+      if (b.id === 0) continue;
       const count = game.s.owned[b.id];
       if (!count) continue;
       let row = this.rows.get(b.id);

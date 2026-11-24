@@ -17,6 +17,8 @@ fs.mkdirSync("test-results", { recursive: true });
     if (r.status() >= 400) bad.push(r.status() + " " + r.url());
   });
   await page.goto("http://127.0.0.1:3000");
+  await page.locator("#player-name").fill("Test Baker");
+  await page.locator("#start-baking").click();
   await page.waitForTimeout(700);
   await page.screenshot({
     path: "test-results/strudel-desktop.png",
@@ -35,16 +37,10 @@ fs.mkdirSync("test-results", { recursive: true });
   )
     throw Error("Old tagline remains");
   await page.locator('[data-building="0"]').click();
-  await page.waitForFunction(() => {
-    const row = document.querySelector('[data-scene="0"]');
-    return (
-      row &&
-      !row.classList.contains("scene-pending") &&
-      row.querySelector("img")?.complete
-    );
-  });
-  if ((await page.locator('[data-scene="0"] .scene-unit').count()) !== 1)
-    throw Error("First purchase must show exactly one object");
+  if ((await page.locator("#pin-orbit").getAttribute("data-owned")) !== "1")
+    throw Error("First rolling pin did not enter the orbit");
+  if (await page.locator('[data-scene="0"]').count())
+    throw Error("Rolling pins must not occupy a scene row");
   if (!(await page.locator('[data-building="0"] .owned').textContent()))
     throw Error("Building purchase failed");
   await page.locator('[data-page="options"]').click();
@@ -95,7 +91,7 @@ fs.mkdirSync("test-results", { recursive: true });
     .evaluateAll((rows) =>
       rows.map((row) => getComputedStyle(row).backgroundImage),
     );
-  if (new Set(backgrounds).size !== 13)
+  if (new Set(backgrounds).size !== 12)
     throw Error("Building backgrounds must be distinct");
   await page.screenshot({
     path: "test-results/strudel-scenes.png",
@@ -103,17 +99,8 @@ fs.mkdirSync("test-results", { recursive: true });
   });
   await page.locator('[data-quantity="10"]').click();
   await page.locator('[data-building="0"]').click();
-  if (
-    (await page.locator('[data-scene="0"]').getAttribute("data-owned")) !== "15"
-  )
-    throw Error("Bulk scene count incorrect");
-  const collection = page.locator('[data-scene="0"] .scene-objects');
-  await collection.evaluate((el) => {
-    el.scrollLeft = el.scrollWidth;
-  });
-  await page.waitForFunction(
-    () => !!document.querySelector('[data-scene="0"] [data-instance="15"]'),
-  );
+  if ((await page.locator("#pin-orbit").getAttribute("data-owned")) !== "15")
+    throw Error("Bulk pin orbit count incorrect");
   await page.locator('[data-mode="sell"]').click();
   await page.locator('[data-building="0"]').click();
   await page.locator('[data-mode="buy"]').click();
@@ -179,25 +166,27 @@ fs.mkdirSync("test-results", { recursive: true });
   const heldBackground = new Promise((resolve) => {
     releaseBackground = resolve;
   });
-  await cold.route("**/assets/scene-rolling-pin.png", async (route) => {
+  await cold.route("**/assets/scene-grandma.png", async (route) => {
     await heldBackground;
     await route.continue();
   });
   await cold.goto("http://127.0.0.1:3000", { waitUntil: "domcontentloaded" });
-  for (let i = 0; i < 15; i++) await cold.locator("#big-strudel").click();
-  await cold.locator('[data-building="0"]').click();
+  await cold.locator("#player-name").fill("Cold Baker");
+  await cold.locator("#start-baking").click();
+  for (let i = 0; i < 100; i++) await cold.locator("#big-strudel").click();
+  await cold.locator('[data-building="1"]').click();
   if (
     !(await cold
-      .locator('[data-scene="0"]')
+      .locator('[data-scene="1"]')
       .evaluate((el) => getComputedStyle(el).visibility === "hidden"))
   )
     throw Error("Scene trim appeared before its artwork");
   releaseBackground();
   await cold.waitForFunction(() => {
-    const row = document.querySelector('[data-scene="0"]');
+    const row = document.querySelector('[data-scene="1"]');
     return row && getComputedStyle(row).visibility === "visible";
   });
-  if ((await cold.locator('[data-scene="0"] .scene-unit').count()) !== 1)
+  if ((await cold.locator('[data-scene="1"] .scene-unit').count()) !== 1)
     throw Error("Cold-load scene has the wrong object count");
   await cold.close();
   console.log(
